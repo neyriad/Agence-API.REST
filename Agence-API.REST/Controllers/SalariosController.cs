@@ -10,7 +10,7 @@ namespace Agence_API.REST.Controllers
     {
         // GET api/salarios
         [HttpGet]
-        public async List<SalarioDto> GetAll()
+        public List<SalarioDto> GetAll()
         {
             var result = SalarioApplication.GetAll();
             return result;
