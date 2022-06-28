@@ -102,11 +102,15 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Application\SalarioApplication.cs" />
+    <Compile Include="Application\PerformanceApplication.cs" />
+    <Compile Include="Application\SalaryApplication.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
-    <Compile Include="Controllers\SalariosController.cs" />
+    <Compile Include="Controllers\PerformanceController.cs" />
+    <Compile Include="Controllers\SalaryController.cs" />
     <Compile Include="Domain\DataAccess\EntitiesDataAccess.cs" />
-    <Compile Include="Domain\EntitiesDto\SalarioDto.cs" />
+    <Compile Include="Domain\EntitiesDto\ConsultantDto.cs" />
+    <Compile Include="Domain\EntitiesDto\SalaryDto.cs" />
+    <Compile Include="Domain\Helpers\ExceptionBuilder.cs" />
     <Compile Include="Domain\Models\cao_fatura.cs">
       <DependentUpon>PerformanceComercial.tt</DependentUpon>
     </Compile>
@@ -137,6 +141,7 @@
     <Compile Include="Domain\Models\permissao_sistema.cs">
       <DependentUpon>PerformanceComercial.tt</DependentUpon>
     </Compile>
+    <Compile Include="Domain\ModelView\SearchParamsDto.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
