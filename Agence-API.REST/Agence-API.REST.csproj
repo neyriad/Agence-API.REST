@@ -107,10 +107,15 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\PerformanceController.cs" />
     <Compile Include="Controllers\SalaryController.cs" />
+    <Compile Include="Domain\Adapters\BillingAdapter.cs" />
+    <Compile Include="Domain\Adapters\ConsultantAdapter.cs" />
     <Compile Include="Domain\DataAccess\EntitiesDataAccess.cs" />
+    <Compile Include="Domain\EntitiesDto\BillingDto.cs" />
     <Compile Include="Domain\EntitiesDto\ConsultantDto.cs" />
+    <Compile Include="Domain\EntitiesDto\EarningsDto.cs" />
+    <Compile Include="Domain\EntitiesDto\PerformanceYearDto.cs" />
     <Compile Include="Domain\EntitiesDto\SalaryDto.cs" />
-    <Compile Include="Domain\Helpers\ExceptionBuilder.cs" />
+    <Compile Include="Domain\Helpers\ExceptionHelper.cs" />
     <Compile Include="Domain\Models\cao_fatura.cs">
       <DependentUpon>PerformanceComercial.tt</DependentUpon>
     </Compile>
@@ -141,7 +146,9 @@
     <Compile Include="Domain\Models\permissao_sistema.cs">
       <DependentUpon>PerformanceComercial.tt</DependentUpon>
     </Compile>
-    <Compile Include="Domain\ModelView\SearchParamsDto.cs" />
+    <Compile Include="Domain\ModelView\DateParam.cs" />
+    <Compile Include="Domain\ModelView\RequestParams.cs" />
+    <Compile Include="Domain\ModelView\RequestInYearParams.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -156,6 +163,7 @@
       <DependentUpon>PerformanceComercial.edmx</DependentUpon>
     </Content>
     <None Include="packages.config" />
+    <None Include="Properties\PublishProfiles\Agence.API.REST.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
