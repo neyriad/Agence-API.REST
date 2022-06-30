@@ -22,7 +22,7 @@ namespace Agence_API.REST.Controllers
             }
             catch (Exception ex)
             {
-                throw ExceptionBuilder.Create(HttpStatusCode.NotFound, "Error getting all salary", 
+                throw ExceptionHelper.Create(HttpStatusCode.NotFound, "Error getting all salary", 
                     $"Details: {ex.Message}");
             }
         }
