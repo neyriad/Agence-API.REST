@@ -10,7 +10,10 @@ namespace Agence_API.REST.Domain.DataAccess
         public static dbEntities Instance {
             get {
                 if (_dbEntities == null)
+                {
                     _dbEntities = new dbEntities();
+                    _dbEntities.Database.Connection.Open();
+                }
                 return _dbEntities;
             }
         }
