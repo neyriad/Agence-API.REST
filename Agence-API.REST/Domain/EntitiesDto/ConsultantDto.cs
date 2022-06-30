@@ -1,5 +1,4 @@
-﻿using Agence_API.REST.Domain.Models;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace Agence_API.REST.Domain.EntitiesDto
 {
@@ -22,17 +21,8 @@ namespace Agence_API.REST.Domain.EntitiesDto
         // Nu_Telefone
         public string Phone { get; set; }
 
-        public static ConsultantDto ToBusinessEntity(cao_usuario entity)
-        {
-            if (null == entity) return null;
-
-            return new ConsultantDto
-            {
-                Name = entity.no_usuario,
-                EmailJob = entity.no_email,
-                EmailPrivate = entity.no_email_pessoal,
-                Phone = entity.nu_telefone
-            };
-        }
+        [DataMember]
+        // Nu_Telefone
+        public string UserName { get; set; }
     }
 }
