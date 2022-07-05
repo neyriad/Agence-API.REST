@@ -7,9 +7,11 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace Agence_API.REST.Controllers
 {
+    [EnableCors(origins: "*", headers: "*", methods: "*")]
     [RoutePrefix("api/performance")]
     public class PerformanceController : ApiController
     {
@@ -35,6 +37,7 @@ namespace Agence_API.REST.Controllers
 
         // GET api/performance/earnings
         [Route("earnings")]
+        [HttpPost]
         public List<EarningsDto> GetEarningsByConsultant(RequestRangeParams param)
         {
             if (!ModelState.IsValid)

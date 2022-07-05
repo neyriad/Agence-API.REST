@@ -19,6 +19,7 @@ namespace Agence_API.REST
             json.SerializerSettings.Formatting = Formatting.Indented;
 
             // Web API routes
+            config.EnableCors();
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(
