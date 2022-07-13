@@ -62,21 +62,18 @@ namespace Agence_API.REST.Application
             var earningList = new List<EarningsDto>();
             var billingList = new List<BillingDto>();
 
-
             var fixedCost = EntitiesDataAccess.Instance.cao_salario
                 .FirstOrDefault(x => x.co_usuario == param.User)?.brut_salario ?? 0;
 
-            var dateInitRageFrom = $"{param.InitDate.Year}-{param.InitDate.Month}";
-            var dateInitRageEnd = $@"{(param.InitDate.Month == 12 ? param.InitDate.Year + 1 : param.InitDate.Year)}-{
-                (param.InitDate.Month == 12 ? 1 : param.InitDate.Month + 1)}";
-            billingList = GetBillingDataByConsultant(param.User, dateInitRageFrom, dateInitRageEnd);
+            var dateInitRageFrom = param.InitDate.ToString("yyyy-MM-dd");
+            var dateInitRageEnd = param.InitDate.AddMonths(1).ToString("yyyy-MM-dd");
+            billingList = GetBillCommissionAndTaxes(param.User, dateInitRageFrom, dateInitRageEnd);
 
             earningList.Add(BuildEarningRecord(billingList, fixedCost));
 
-            var dateEndRageFrom = $"{param.EndDate.Year}-{param.EndDate.Month}";
-            var dateEndRageEnd = $@"{(param.EndDate.Month == 12 ? param.EndDate.Year + 1 : param.EndDate.Year)}-{
-                (param.EndDate.Month == 12 ? 1 : param.EndDate.Month + 1)}";
-            billingList = GetBillingDataByConsultant(param.User, dateEndRageFrom, dateEndRageEnd);
+            var dateEndRageFrom = param.EndDate.ToString("yyyy-MM-dd"); ;
+            var dateEndRageEnd = param.EndDate.AddMonths(1).ToString("yyyy-MM-dd");
+            billingList = GetBillCommissionAndTaxes(param.User, dateEndRageFrom, dateEndRageEnd);
 
             earningList.Add(BuildEarningRecord(billingList, fixedCost));
               
@@ -97,57 +94,54 @@ namespace Agence_API.REST.Application
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static PerformanceYearDto GetPerformanceByConsultantAndYear(RequestInYearParams param)
+        public static PerformanceYearDto GetPerformanceByConsultantAndRange(RequestRangeParams param)
         {
             var valueList = new List<double>();
-            var billingList = new List<BillingDto>();
+            var monthList = new List<string>();
 
             var fixedCost = EntitiesDataAccess.Instance.cao_salario
                 .FirstOrDefault(x => x.co_usuario == param.User)?.brut_salario ?? 0;
 
-            var endQueryDate = $@"{(param.EndMonth == 12 ? param.Year + 1 : param.Year)}-{
-                (param.EndMonth == 12 ? 1 : param.EndMonth + 1)}";
-            var query = $@"SELECT 
-		        [dbo].[cao_fatura].valor as BillValue
-		        ,[dbo].[cao_fatura].data_emissao as BillDate
-		        ,[dbo].[cao_fatura].total_imp_inc as Taxes
-                FROM [dbo].[cao_os]
-                LEFT JOIN [dbo].[cao_fatura] ON [dbo].[cao_fatura].co_os = [dbo].[cao_os].co_os
-                WHERE [dbo].[cao_os].co_usuario = '{param.User}'
-	            AND [dbo].[cao_fatura].data_emissao >= '{param.Year}-{param.InitMonth}-01'
-	            AND [dbo].[cao_fatura].data_emissao < '{endQueryDate}-01'";
+            var dateFrom = param.InitDate.ToString("yyyy-MM-dd");
+            var dateEnd = param.EndDate.AddMonths(1).ToString("yyyy-MM-dd");
 
-            using (var command = EntitiesDataAccess.Instance.Database.Connection.CreateCommand())
+            var billingList = GetBillAndTaxes(param.User, dateFrom, dateEnd);
+
+            billingList = billingList.OrderBy(x => x.BillDate).ToList();
+            for (var i = param.InitDate; i.Year <= param.EndDate.Year && i.Month <= param.EndDate.Month; i=i.AddMonths(1))
             {
-                try
-                {
-                    command.CommandText = query;
-
-                    using (var result = command.ExecuteReader())
-                    {
-                        while (result.Read())
-                        {
-                            billingList.Add(BillingAdapter.BusinessEntityForPerformance(result));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-            }
-
-            for(var i = param.InitMonth; i <= param.EndMonth; i++)
-            {
-                valueList.Add(billingList.Where(x => x.BillDate.Month == i)
-                    .Sum(x => x.BillValue - ((double)x.BillValue * x.Commission / 100)));
+                var billing = billingList.Where(x => x.BillDate.Month == i.Month && x.BillDate.Year == i.Year)
+                    .Sum(x => x.BillValue - ((double)x.BillValue * x.Taxes / 100));
+                monthList.Add(i.ToString("MMM-yyyy"));
+                valueList.Add( Math.Round(billing, 2) );
             }
 
             return new PerformanceYearDto
             {
+                UserName = param.User,
+                MonthList = monthList,
                 ValueList = valueList,
-                TotalPerformance = valueList.Sum(),
                 FixedCost = fixedCost
+            };
+        }
+
+        /// <summary>
+        /// Respnosible of getting net earnings totals
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static PerformanceYearDto GetPerformanceForPercentage(RequestRangeParams param)
+        {
+            var dateFrom = param.InitDate.ToString("yyyy-MM-dd");
+            var dateEnd = param.EndDate.AddMonths(1).ToString("yyyy-MM-dd");
+
+            var billingList = GetBillAndTaxes(param.User, dateFrom, dateEnd);
+            var billing = billingList.Sum(x => x.BillValue - ((double)x.BillValue * x.Taxes / 100));
+
+            return new PerformanceYearDto
+            {
+                UserName = param.User,
+                TotalPerformance = Math.Round(billing, 2)
             };
         }
 
@@ -158,10 +152,8 @@ namespace Agence_API.REST.Application
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        private static List<BillingDto> GetBillingDataByConsultant(string user, string init_date, string end_date)
+        private static List<BillingDto> GetBillCommissionAndTaxes(string user, string init_date, string end_date)
         {
-            var billingList = new List<BillingDto>();
-
             var query = $@"SELECT [dbo].[cao_fatura].co_fatura as BillId
 		        ,[dbo].[cao_fatura].valor as BillValue
 		        ,[dbo].[cao_fatura].comissao_cn as Commission
@@ -169,30 +161,30 @@ namespace Agence_API.REST.Application
                 FROM [dbo].[cao_os]
                 LEFT JOIN [dbo].[cao_fatura] ON [dbo].[cao_fatura].co_os = [dbo].[cao_os].co_os
                 WHERE [dbo].[cao_os].co_usuario = '{user}'
-	            AND [dbo].[cao_fatura].data_emissao >= '{init_date}-01'
-	            AND [dbo].[cao_fatura].data_emissao < '{end_date}-01'";
+	            AND [dbo].[cao_fatura].data_emissao >= '{init_date}'
+	            AND [dbo].[cao_fatura].data_emissao < '{end_date}'";
 
-            using (var command = EntitiesDataAccess.Instance.Database.Connection.CreateCommand())
-            {
-                try
-                {
-                    command.CommandText = query;
+            return GetBillingFromQuery(query);
+        }
 
-                    using (var result = command.ExecuteReader())
-                    {
-                        while (result.Read())
-                        {
-                            billingList.Add(BillingAdapter.BusinessEntityForEarnings(result));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-            }
+        /// <summary>
+        /// Responsible of getting billing data by user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        private static List<BillingDto> GetBillAndTaxes(string user, string init_date, string end_date)
+        {
+            var query = $@"SELECT 
+            [dbo].[cao_fatura].valor as BillValue
+            ,[dbo].[cao_fatura].data_emissao as BillDate
+            ,[dbo].[cao_fatura].total_imp_inc as Taxes
+                  FROM [dbo].[cao_os]
+                  LEFT JOIN [dbo].[cao_fatura] ON [dbo].[cao_fatura].co_os = [dbo].[cao_os].co_os
+                  WHERE [dbo].[cao_os].co_usuario = '{user}'
+               AND [dbo].[cao_fatura].data_emissao >= '{init_date}'
+               AND [dbo].[cao_fatura].data_emissao < '{end_date}'";
 
-            return billingList;
+            return GetBillingFromQuery(query);
         }
 
         /// <summary>
@@ -217,6 +209,43 @@ namespace Agence_API.REST.Application
             earning.Profit = (value - taxes) - (fixedCost + commission);
 
             return earning;
+        }
+
+        /// <summary>
+        /// Responsible of execute custom queries
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        private static List<BillingDto> GetBillingFromQuery(string query)
+        {
+            var billingList = new List<BillingDto>();
+
+            using (var command = EntitiesDataAccess.Instance.Database.Connection.CreateCommand())
+            {
+                try
+                {
+                    command.CommandText = query;
+
+                    using (var result = command.ExecuteReader())
+                    {
+                        var fieldNames = Enumerable.Range(0, result.FieldCount).Select(i => result.GetName(i)).ToArray();
+                        var containsId = fieldNames.Contains("BillId");
+                        while (result.Read())
+                        {
+                            if (containsId)
+                                billingList.Add(BillingAdapter.BusinessEntityForEarnings(result));
+                            else
+                                billingList.Add(BillingAdapter.BusinessEntityForPerformance(result));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return billingList;
         }
 
         #endregion

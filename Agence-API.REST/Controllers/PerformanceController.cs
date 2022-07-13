@@ -35,7 +35,7 @@ namespace Agence_API.REST.Controllers
             }
         }
 
-        // GET api/performance/earnings
+        // POST api/performance/earnings
         [Route("earnings")]
         [HttpPost]
         public List<EarningsDto> GetEarningsByConsultant(RequestRangeParams param)
@@ -56,27 +56,54 @@ namespace Agence_API.REST.Controllers
             }
         }
 
-        // GET api/performance/bymonth
-        [Route("bymonth")]
-        public PerformanceYearDto GetPerformanceByConsultantAndYear(RequestInYearParams param)
+        // POST api/performance/month_range
+        [Route("month_range")]
+        [HttpPost]
+        public PerformanceYearDto GetPerformanceByConsultantAndRange(RequestRangeParams param)
         {
             if (!ModelState.IsValid)
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest,
                     ModelState));
 
-            if(param.InitMonth > param.EndMonth)
+            if(param.InitDate > param.EndDate)
                 throw ExceptionHelper.Create(HttpStatusCode.NotFound,
-                    $"Error getting performance by user {param.User} and and year {param.Year}",
+                    $"Error getting performance by user {param.User}",
                     $"Initial month value cannot be greater than end month value");
 
             try
             {
-                return PerformanceApplication.GetPerformanceByConsultantAndYear(param);
+                return PerformanceApplication.GetPerformanceByConsultantAndRange(param);
             }
             catch (Exception ex)
             {
                 throw ExceptionHelper.Create(HttpStatusCode.NotFound, 
-                    $"Error getting performance by user {param.User} and and year {param.Year}",
+                    $"Error getting performance by user {param.User}",
+                    $"Details: {ex.Message}");
+            }
+        }
+
+        // POST api/performance/percentage
+        [Route("percentage")]
+        [HttpPost]
+        public PerformanceYearDto GetPerformanceByConsultantForPercentage(RequestRangeParams param)
+        {
+            if (!ModelState.IsValid)
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest,
+                    ModelState));
+
+            if(param.InitDate > param.EndDate)
+                throw ExceptionHelper.Create(HttpStatusCode.NotFound,
+                    $"Error getting performance by user {param.User}",
+                    $"Initial month value cannot be greater than end month value");
+
+            try
+            {
+                return PerformanceApplication.GetPerformanceForPercentage(param);
+            }
+            catch (Exception ex)
+            {
+                throw ExceptionHelper.Create(HttpStatusCode.NotFound, 
+                    $"Error getting performance by user {param.User}",
                     $"Details: {ex.Message}");
             }
         }

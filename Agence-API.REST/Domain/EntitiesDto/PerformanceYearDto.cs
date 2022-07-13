@@ -7,6 +7,12 @@ namespace Agence_API.REST.Domain.EntitiesDto
     public class PerformanceYearDto
     {
         [DataMember]
+        public string UserName { get; set; }
+
+        [DataMember]
+        public List<string> MonthList { get; set; }
+
+        [DataMember]
         public List<double> ValueList { get; set; }
 
         [DataMember]

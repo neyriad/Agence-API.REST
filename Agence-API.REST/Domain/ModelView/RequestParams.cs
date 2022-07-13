@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
 namespace Agence_API.REST.Domain.ModelView
@@ -12,10 +13,10 @@ namespace Agence_API.REST.Domain.ModelView
 
         [DataMember]
         [Required]
-        public DateParam InitDate { get; set; }
+        public DateTime InitDate { get; set; }
 
         [DataMember]
         [Required]
-        public DateParam EndDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }
